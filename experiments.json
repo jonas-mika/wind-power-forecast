@@ -1,0 +1,42 @@
+[
+  {
+    "name": "LinearRegression",
+    "params": {
+      "poly_features__degree": [1, 2, 3, 4, 5]
+    },
+    "metrics": [
+      "explained_variance", 
+      "max_error", 
+      "neg_mean_squared_error",
+      "neg_mean_absolute_error"
+    ]   
+  },
+  {
+    "name": "KNeighborsRegressor",
+    "params": {
+      "poly_features__degree": [1, 2],
+      "reg__n_neighbors": [5, 7, 9, 11, 13, 15],
+      "reg__weights": ["uniform", "distance"] 
+    },
+    "metrics": [
+      "explained_variance", 
+      "max_error", 
+      "neg_mean_absolute_error",
+      "neg_mean_squared_error"
+    ]   
+  },
+  {
+    "name": "GradientBoostingRegressor",
+    "params": {
+      "poly_features__degree": [2],
+      "reg__n_estimators": [10],
+      "reg__max_depth": [2]
+    },
+    "metrics": [
+      "explained_variance", 
+      "max_error", 
+      "neg_mean_absolute_error",
+      "neg_mean_squared_error"
+    ]   
+  }
+]
