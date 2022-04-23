@@ -1,0 +1,5 @@
+name: wind-power-forecast
+conda_env: conda.yml
+entry_points: 
+  main:
+    command: "python main.py"
