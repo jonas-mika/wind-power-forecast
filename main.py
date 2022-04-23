@@ -3,7 +3,12 @@ import mlflow
 from azureml.core import Workspace
 
 # custom imports 
-from helpers import preprocess
+from helpers import (
+    ColumnSelector,
+    Direction2Radians,
+    InterpolateData, 
+    Imputer,
+    Direction2Vec)
 from helpers import fetch_logged_data
 from helpers import output, working_on, finished
 
@@ -13,6 +18,7 @@ import os
 import sys
 import json
 import warnings
+from datetime import datetime
 from timeit import default_timer as timer
 
 # external imports
@@ -44,12 +50,16 @@ def main():
   # load data
   s = working_on("Loading Data")
   data = pd.read_json("data/dataset.json", orient="split")
+  y = data.pop("Total")
+  X = data
   finished("Loading Data", timer() - s)
 
-  # preprocessing
-  s = working_on("Preprocessing Data")
-  data, X, y = preprocess(data)
-  finished("Preprocessing Data", timer() - s)
+
+
+  # pipe.fit(X, y)
+  # test = pd.DataFrame({"Speed": [7, 6], "Direction": ["N", "NW"]})
+  # print(pipe.predict(test))
+  # return
 
   # load model configurations for ml experiments
   with open("experiments.json", "r") as f:
@@ -57,21 +67,25 @@ def main():
 
   # mlflow experiment settings
   mlflow.set_experiment(f"jsen-wind-power-forecast")
-  mlflow.sklearn.autolog()
+  mlflow.sklearn.autolog(log_input_examples=True, silent=True)
 
-  s = working_on("Training Models")
   for i, model in enumerate(experiments):
     exp_id = i+1
     name = model["name"]
     params = model["params"]
     metrics = model["metrics"]
-  
+
+    s = working_on(f"Training {name}")
 
     reg = globals()[name]()
     pipe = Pipeline([
-            ("scaler", StandardScaler()),
-            ("poly_features", PolynomialFeatures()),
-            ("reg", reg)])
+          ("column_selector", ColumnSelector(["Direction", "Speed"])),
+          ("encode_direction", Direction2Radians()),
+          ("interpolate", InterpolateData()),
+          ("imputer", Imputer()),
+          ("transform_direction", Direction2Vec()),
+          ("poly_features", PolynomialFeatures()),
+          ("reg", reg)])
 
     grid = GridSearchCV(
         estimator=pipe, 
@@ -82,17 +96,65 @@ def main():
         verbose=1,
         n_jobs=-1) 
 
-    grid.__class__.__name__ = name
     grid.fit(X, y)
+    best_estimator = grid.best_estimator_
+    best_score = grid.best_score_
+    best_params = grid.best_params_
+    run_id = mlflow.last_active_run().info.run_id
 
-    #run_id = mlflow.last_active_run().info.run_id
-    #print(f"Logged data and model in run: {run_id}")
+    # update best model if needed
+    try: 
+      with open("best_model.json", "r") as f:
+        best_model = json.loads(f.read())
+
+      if best_score > best_model["score"]:
+        print(f"New best model. Saving {name}")
+        mlflow.sklearn.save_model(
+            best_estimator,
+            path="best_model",
+            conda_env="conda.yml")
+
+        best_model = {
+            "timestamp": datetime.now().timestamp(),
+            "date": datetime.today().strftime("%m/%d/%Y"),
+            "name": name,
+            "run_id": run_id,
+            "score": best_score,
+            "params": best_params
+            }
+        with open("best_model.json", "w") as f:
+          json.dump(best_model, f)
+      else: 
+        print(f"Model {name} not better. Not saving")
+
+    except:
+      print(f"No best model saved yet. Saving {name}")
+      mlflow.sklearn.save_model(
+          best_estimator,
+          path="best_model",
+          conda_env="conda.yml")
+
+      best_model = {
+          "timestamp": datetime.now().timestamp(),
+          "date": datetime.today().strftime("%m/%d/%Y"),
+          "run_id": run_id,
+          "name": name,
+          "score": best_score,
+          "params": best_params
+          }
+      with open("best_model.json", "w") as f:
+        json.dump(best_model, f)
+
+    # print logged data of saved model
+    print(f"Logged data and model in run: {run_id}")
 
     #for key, data in fetch_logged_data(run_id).items():
     #    print(f"Logged {key}:\n")
     #    pprint(data)
 
-  finished("Training Models", timer() - s)
+    finished(f"Training {name}", timer() - s)
+
+
   finished("Entire Pipeline", timer() - total)
 
   print("Get Overview over most recent runs by "\
