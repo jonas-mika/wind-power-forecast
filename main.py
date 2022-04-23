@@ -100,7 +100,6 @@ def main():
     best_estimator = grid.best_estimator_
     best_score = grid.best_score_
     best_params = grid.best_params_
-    run_id = mlflow.last_active_run().info.run_id
 
     # update best model if needed
     try: 
@@ -118,7 +117,6 @@ def main():
             "timestamp": datetime.now().timestamp(),
             "date": datetime.today().strftime("%m/%d/%Y"),
             "name": name,
-            "run_id": run_id,
             "score": best_score,
             "params": best_params
             }
@@ -137,7 +135,6 @@ def main():
       best_model = {
           "timestamp": datetime.now().timestamp(),
           "date": datetime.today().strftime("%m/%d/%Y"),
-          "run_id": run_id,
           "name": name,
           "score": best_score,
           "params": best_params
@@ -146,7 +143,7 @@ def main():
         json.dump(best_model, f)
 
     # print logged data of saved model
-    print(f"Logged data and model in run: {run_id}")
+    # print(f"Logged data and model in run: {run_id}")
 
     #for key, data in fetch_logged_data(run_id).items():
     #    print(f"Logged {key}:\n")
