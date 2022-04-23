@@ -1,6 +1,8 @@
 # custom
 mlruns
 template.py
+best_model.json
+best_model
 
 .DS_Store
 
