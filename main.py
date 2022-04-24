@@ -37,8 +37,8 @@ def main():
   total = timer()
 
   # env setup
-  ws = Workspace.from_config()
-  mlflow.set_tracking_uri(ws.get_mlflow_tracking_uri())
+  # ws = Workspace.from_config()
+  # mlflow.set_tracking_uri(ws.get_mlflow_tracking_uri())
   # mlflow.set_tracking_uri("https://training.itu.dk:5000/")
 
   # load data
