@@ -1,6 +1,4 @@
 # lsda assignment 3: mlflow ml pipeline
-import mlflow
-from azureml.core import Workspace
 
 # custom imports 
 from helpers import (
@@ -11,8 +9,8 @@ from helpers import (
     Direction2Vec)
 from helpers import fetch_logged_data
 from helpers import output, working_on, finished
-
 output("Loading Modules.")
+
 # system imports
 import os
 import sys
@@ -22,29 +20,25 @@ from datetime import datetime
 from timeit import default_timer as timer
 
 # external imports
+import mlflow
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from pprint import pprint
+from azureml.core import Workspace
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import (
-    StandardScaler,
-    PolynomialFeatures)
+from sklearn.preprocessing import PolynomialFeatures
 from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
 from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.metrics import (
-    mean_absolute_error, 
-    mean_squared_error, 
-    r2_score)
+from sklearn.ensemble import GradientBoostingRegressor
 
 def main():
   total = timer()
 
   # env setup
-  # ws = Workspace.from_config()
-  # mlflow.set_tracking_uri(ws.get_mlflow_tracking_uri())
+  ws = Workspace.from_config()
+  mlflow.set_tracking_uri(ws.get_mlflow_tracking_uri())
   # mlflow.set_tracking_uri("https://training.itu.dk:5000/")
 
   # load data
@@ -53,13 +47,6 @@ def main():
   y = data.pop("Total")
   X = data
   finished("Loading Data", timer() - s)
-
-
-
-  # pipe.fit(X, y)
-  # test = pd.DataFrame({"Speed": [7, 6], "Direction": ["N", "NW"]})
-  # print(pipe.predict(test))
-  # return
 
   # load model configurations for ml experiments
   with open("experiments.json", "r") as f:
@@ -142,15 +129,7 @@ def main():
       with open("best_model.json", "w") as f:
         json.dump(best_model, f)
 
-    # print logged data of saved model
-    # print(f"Logged data and model in run: {run_id}")
-
-    #for key, data in fetch_logged_data(run_id).items():
-    #    print(f"Logged {key}:\n")
-    #    pprint(data)
-
     finished(f"Training {name}", timer() - s)
-
 
   finished("Entire Pipeline", timer() - total)
 
