@@ -44,28 +44,24 @@ mlflow run git@github.com:jonas-mika/wind-power-prediction-system.git
 
 ## Viewing Results
 
-All experiment results are saved in a `PostgreSQL`
-database hosted publicly on `https://training.itu.dk:5000/#/`. 
-This project has an experiment ID of `jsen-wind-power-forecast`.
-This can however be changed as an argument to running the main 
-script if desired.
+All experiment results are saved in an Azure
+Machine Learning environment. After cloning, the
+projects can however easily be run locally and the
+results are saved to the filesystem in the
+directory `mlruns`. Running `mlflow ui` from the
+root of the project opens a MLFlow tracking server
+with a user interface to easily view and compare
+the results of the different experiments.
 
 ```
-open https://training.itu.dk:5000/#/
-```
-
-Otherwise running the following command opens a tracking server on localhost:
-
-```
-mlflow ui -h 0.0.0.0 -p 8888
-open http://0.0.0.0:8888
+mlflow ui 
+open http://127.0.0.1:5000
 ```
 
 ## Serving Model
 
-To serve the model as a REST API run after having
-run the entire project workflow. This will serve
-the currently best performing model (metadata
+To serve the model as a REST API run the following
+command after having run the entire project workflow. This will serve the currently best performing model (metadata
 stored in `best_model.json` and MLFlow artifact in
 directory `best_model`). By default the model is
 hosted locally at the address `http://127.0.0.0:5000`.
@@ -79,4 +75,16 @@ Get predictions from the model by running
 ```
 curl 127.0.0.1:5000/invocations -H 'Content-Type: application/json'\
   -d '{"columns": ["Speed", "Direction"], "data": [[5,"S"]]}'
+```
+
+## Testing the Model
+
+The model is currently hosted on an
+[Azure](https://azure.microsoft.com) virtual
+machine as a background progress on port `5000`.
+The model can be queried live through the
+following command:
+
+```
+curl http://20.113.156.88:5000/invocations -H 'Content-Type: application/json' -d '{"columns": ["Speed", "Direction"], "data": [[5,"S"]]}'
 ```
