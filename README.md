@@ -68,8 +68,7 @@ run the entire project workflow. This will serve
 the currently best performing model (metadata
 stored in `best_model.json` and MLFlow artifact in
 directory `best_model`). By default the model is
-hosted locally at the address
-`http://127.0.0.0:5000`.
+hosted locally at the address `http://127.0.0.0:5000`.
 
 ```
 mlflow models serve -m best_model [--no-conda]
@@ -78,7 +77,6 @@ mlflow models serve -m best_model [--no-conda]
 Get predictions from the model by running
 
 ```
-curl 127.0.0.1:5000/invocations 
-  -H 'Content-Type: application/json' 
-  -d '{"columns": ["Speed", "Direction"], "data": [[5,"S"]]}
+curl 127.0.0.1:5000/invocations -H 'Content-Type: application/json'\
+  -d '{"columns": ["Speed", "Direction"], "data": [[5,"S"]]}'
 ```
