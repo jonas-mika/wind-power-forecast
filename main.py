@@ -91,9 +91,6 @@ def main():
         mlflow.log_params({key: val for key, val
           in pipe.get_params().items() if key!='steps'})
         
-        # use time series split for cross-validation
-        tscv = TimeSeriesSplit(n_splits=5)
-
         # cross-validate scores
         for train, test in TimeSeriesSplit(3).split(X,y):
           # fit cv split

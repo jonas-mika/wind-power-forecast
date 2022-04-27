@@ -209,9 +209,6 @@ cross-validation to ensure to not train on future
 data. The `test_size` was left at default.
 
 ```python
-# use time series split for cross-validation
-tscv = TimeSeriesSplit(n_splits=5)
-
 # cross-validate scores
 for train, test in TimeSeriesSplit(3).split(X,y):
   # fit cv split
