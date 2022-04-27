@@ -15,6 +15,7 @@ output("Loading Modules.")
 import os
 import sys
 import json
+import shutil
 import warnings
 from datetime import datetime
 from timeit import default_timer as timer
@@ -32,6 +33,11 @@ from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
 from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.metrics import (
+    mean_squared_error,
+    mean_absolute_error,
+    explained_variance_score,
+    r2_score)
 
 def main():
   total = timer()
@@ -54,83 +60,107 @@ def main():
 
   # mlflow experiment settings
   mlflow.set_experiment(f"jsen-wind-power-forecast")
-  mlflow.sklearn.autolog(log_input_examples=True, silent=True)
 
   for i, model in enumerate(experiments):
     exp_id = i+1
-    name = model["name"]
-    params = model["params"]
-    metrics = model["metrics"]
+    model_name = model["name"]
+    max_degree = model["max_degree"]
 
-    s = working_on(f"Training {name}")
+    # metrics 
+    metrics =  {
+        "MAE": (mean_absolute_error, []),
+        "MSE": (mean_squared_error, []),
+        "Explained Variance": (explained_variance_score, []),
+        "R2-Score": (r2_score, [])}
 
-    reg = globals()[name]()
-    pipe = Pipeline([
-          ("column_selector", ColumnSelector(["Direction", "Speed"])),
-          ("encode_direction", Direction2Radians()),
-          ("interpolate", InterpolateData()),
-          ("imputer", Imputer()),
-          ("transform_direction", Direction2Vec()),
-          ("poly_features", PolynomialFeatures()),
-          ("reg", reg)])
+    for degree in range(1, max_degree+1):
+      with mlflow.start_run(run_name=f"{model_name} (Degree: {degree})") as run:
+        s = working_on(f"Training {model_name} on {degree}-th Polynomial")
 
-    grid = GridSearchCV(
-        estimator=pipe, 
-        param_grid=params,
-        scoring=metrics,
-        refit="explained_variance",
-        cv=5,
-        verbose=1,
-        n_jobs=-1) 
+        reg = globals()[model_name]()
+        pipe = Pipeline([
+              ("column_selector", ColumnSelector(["Direction", "Speed"])),
+              ("encode_direction", Direction2Radians()),
+              ("interpolate", InterpolateData()),
+              ("imputer", Imputer()),
+              ("transform_direction", Direction2Vec()),
+              ("poly_features", PolynomialFeatures(degree=degree)),
+              ("reg", reg)])
 
-    grid.fit(X, y)
-    best_estimator = grid.best_estimator_
-    best_score = grid.best_score_
-    best_params = grid.best_params_
+        # log all parameters
+        mlflow.log_params({key: val for key, val
+          in pipe.get_params().items() if key!='steps'})
+        
+        # use time series split for cross-validation
+        tscv = TimeSeriesSplit(n_splits=5)
 
-    # update best model if needed
-    try: 
-      with open("best_model.json", "r") as f:
-        best_model = json.loads(f.read())
+        # cross-validate scores
+        for train, test in TimeSeriesSplit(3).split(X,y):
+          # fit cv split
+          pipe.fit(X.iloc[train],y.iloc[train])
+          preds = pipe.predict(X.iloc[test])
+          truth = y.iloc[test]
 
-      if best_score > best_model["score"]:
-        print(f"New best model. Saving {name}")
-        mlflow.sklearn.save_model(
-            best_estimator,
-            path="best_model",
-            conda_env="conda.yml")
+          for name, val in metrics.items(): 
+            func, scores = val
+            score = func(truth, preds)
+            scores.append(score)
 
-        best_model = {
-            "timestamp": datetime.now().timestamp(),
-            "date": datetime.today().strftime("%m/%d/%Y"),
-            "name": name,
-            "score": best_score,
-            "params": best_params
-            }
-        with open("best_model.json", "w") as f:
-          json.dump(best_model, f)
-      else: 
-        print(f"Model {name} not better. Not saving")
+        # logging model in run
+        pipe.fit(X, y)
+        mlflow.sklearn.log_model(pipe, 
+            artifact_path=f"mlruns/1/{run.info.run_id}")
 
-    except:
-      print(f"No best model saved yet. Saving {name}")
-      mlflow.sklearn.save_model(
-          best_estimator,
-          path="best_model",
-          conda_env="conda.yml")
+        for name, val in metrics.items():
+          _, scores = val
+          mlflow.log_metric(f"Mean {name}", np.mean(scores))
 
-      best_model = {
-          "timestamp": datetime.now().timestamp(),
-          "date": datetime.today().strftime("%m/%d/%Y"),
-          "name": name,
-          "score": best_score,
-          "params": best_params
-          }
-      with open("best_model.json", "w") as f:
-        json.dump(best_model, f)
+          # final scoring
+          if name == 'Explained Variance':
+            final_score = np.mean(scores)
 
-    finished(f"Training {name}", timer() - s)
+        # update best model if needed
+        try: 
+          with open("best_model.json", "r") as f:
+            best_model = json.loads(f.read())
 
+          if final_score > best_model["score"]:
+            shutil.rmtree('best_model')
+            print(f"New best model. Saving {model_name}")
+            mlflow.sklearn.save_model(
+                pipe,
+                path="best_model",
+                conda_env="conda.yml")
+
+            best_model = {
+                "timestamp": datetime.now().timestamp(),
+                "date": datetime.today().strftime("%m/%d/%Y"),
+                "model_name": model_name,
+                "score": final_score,
+                "degree": degree
+                }
+            with open("best_model.json", "w") as f:
+              json.dump(best_model, f)
+          else: 
+            print(f"Model {model_name} not better. Not saving")
+
+        except:
+          print(f"No best model saved yet. Saving {model_name}")
+          mlflow.sklearn.save_model(
+              pipe,
+              path="best_model",
+              conda_env="conda.yml")
+
+          best_model = {
+              "timestamp": datetime.now().timestamp(),
+              "date": datetime.today().strftime("%m/%d/%Y"),
+              "model_name": model_name,
+              "score": final_score,
+              "degree": degree
+              }
+          with open("best_model.json", "w") as f:
+            json.dump(best_model, f)
+        finished(f"Training {model_name}", timer() - s)
   finished("Entire Pipeline", timer() - total)
 
   print("Get Overview over most recent runs by "\
