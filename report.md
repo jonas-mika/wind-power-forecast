@@ -114,7 +114,6 @@ max_degree]`.
   {
     "name": "LinearRegression",
     "max_degree": 9
-    }
   },
   {
     "name": "KNeighborsRegressor",
