@@ -314,6 +314,19 @@ models. The main advantages found are:
    tracking server, that offers a UI to view and
    compare the results.
 
+   By default, logging can be implementing with
+   logging libraries, such as `logging` in the
+   base distribution of Python. Since this,
+   however, is a general purpose tool, it does not
+   offer as neat functionality for tracking
+   machine learning parameters, metrics and
+   artifacts. Furthermore, logging libraries
+   typically write to plain text files, and there
+   is no simple way to get a visual overviews over
+   the different logging results. MLFlow's UI
+   tracking server is a very nice tool, that would
+   be tedious to code from scratch.
+
 2. MLFlow projects are closely interlinked with
    environments like `conda` or `docker`, which
    specify the packages in the correct versions
@@ -325,8 +338,19 @@ models. The main advantages found are:
    are easily reproducible, even for people with
    little experience in programming.
 
+   There are many different ways of trying to make
+   code reproducible. The most commonly used
+   options are to use virtual environments, like
+   `conda` or `venv` that have to be created based
+   on some environment file. MLFlow does the same,
+   but abstracts away the technicalities of
+   virtual environments, as they are automatically
+   resolved when running `mlflow run .`. This
+   makes the experiments reproducible even for
+   people with minimal programming experience.
+
 3. MLFlow offers a unified way to serve models,
-   i.e. through a REST API
+   i.e. through a REST API. The
 
 In conclusion, one can say that MLFlow is not
 reinventing the wheel. Everything that it does,
