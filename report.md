@@ -334,9 +334,7 @@ models. The main advantages found are:
    By allowing clients to run the entire project
    flow by simply running `mlflow run <URL>`,
    which resolves all necessary dependencies and
-   runs the entire pipeline automatically, results
-   are easily reproducible, even for people with
-   little experience in programming.
+   runs the entire pipeline automatically.
 
    There are many different ways of trying to make
    code reproducible. The most commonly used
@@ -355,7 +353,7 @@ models. The main advantages found are:
 In conclusion, one can say that MLFlow is not
 reinventing the wheel. Everything that it does,
 could be done in regular Python. However, it offers
-a really complete one-in-all solution for
+a one-in-all solution for
 the entire machine learning pipeline, that greatly
 simplifies developing scalable machine learning
 projects.
