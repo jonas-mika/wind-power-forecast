@@ -8,8 +8,11 @@
 This project revisits Assignment 1 of the course
 Large Scale Data Analysis. The goal of the project
 was to develop a `sklearn` pipeline that uses
-recent [weather data]() and [energy generation
-data]() of the region
+recent [weather
+data](https://www.metoffice.gov.uk/weather/forecast/gftcsumwq)
+and [energy generation
+data](https://www.ssen.co.uk/our-services/active-network-management/)
+of the region
 [Orkney](https://en.wikipedia.org/wiki/Orkney) in
 order to build a model predicting the energy
 generation through wind energy based on weather
@@ -17,12 +20,12 @@ conditions, like the wind speed and direction. The
 best-performing model should be served on an
 [Azure]() VM as a REST API as a forecasting model
 for future weeks. The project is using
-  [MLFlow](https://mlflow.org), an open source
-  platform to manage the ML lifecycle, to log
-  experimentation with different models and
-  configuration, allowing for easily reproducible
-  results and deployment of the model as a REST
-  API in the cloud.
+[MLFlow](https://mlflow.org), an open source
+platform to manage the ML lifecycle, to log
+experimentation with different models and
+configuration, allowing for easily reproducible
+results and deployment of the model as a REST
+API in the cloud.
 
 The source code of this project is publicly
 available on
@@ -30,7 +33,7 @@ available on
 For details of the implementation and information
 about how to reproduce the experiments and results
 follow the
-[README](https://github.com/jonas-mika/wind-power-forecast/README.md).
+[README](https://github.com/jonas-mika/wind-power-forecast/blob/master/README.md).
 
 ## Reproduce Results
 
@@ -136,7 +139,7 @@ The project tested three ML models in different
 hyperparameter configurations, which are specified
 in the below table.
 
-| Model | Hyperparameters Grid | #Model Configurations | CV Folds | Total Fits | Scoring |
+| Model | Polynomial Degrees | #Model Configurations | CV Folds | Total Fits | Scoring |
 | :---  | :---: | :---: | :---: | :---: | ---: |
 | Linear Regression  | 1, 2, 3, 4, 5, 6, 7, 9 | 9 | 3 | 27  | Explained Variance   |
 | KNN Regressor  | 1, 2 | 2 | 3 | 6 | Explained Variance   |
